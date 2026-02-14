@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Waste-to-Skill Exchange Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+
+body{
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+color:white;
+}
+
+header{
+text-align:center;
+padding:25px;
+position:relative;
+}
+
+.language-toggle{
+position:absolute;
+top:20px;
+right:20px;
+}
+
+.language-toggle button{
+padding:8px 12px;
+margin-left:5px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+background:white;
+color:#2c5364;
+font-weight:bold;
+}
+
+.container{
+width:95%;
+max-width:1100px;
+margin:20px auto;
+background:white;
+color:black;
+padding:25px;
+border-radius:15px;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
+}
+
+h2{margin-bottom:15px;color:#2c5364;}
+
+input,select{
+width:100%;
+padding:10px;
+margin:8px 0;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button.action{
+width:100%;
+padding:12px;
+background:#2c5364;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:16px;
+margin-top:10px;
+}
+
+button.action:hover{background:#1c3748;}
+
+table{
+width:100%;
+margin-top:15px;
+border-collapse:collapse;
+}
+
+th,td{
+border:1px solid #ddd;
+padding:10px;
+text-align:center;
+}
+
+th{
+background:#2c5364;
+color:white;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+margin-top:20px;
+}
+
+.card{
+background:#2c5364;
+color:white;
+padding:20px;
+border-radius:12px;
+text-align:center;
+font-size:18px;
+}
+
+.result-box{
+margin-top:15px;
+padding:15px;
+background:#f2f2f2;
+border-radius:10px;
+}
+
+footer{text-align:center;padding:20px;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1 id="mainTitle">AI-Based Waste-to-Skill Exchange Platform</h1>
+<p id="subtitle">National Level Competition Version</p>
+
+<div class="language-toggle">
+<button onclick="setLanguage('en')">English</button>
+<button onclick="setLanguage('mr')">मराठी</button>
+</div>
+</header>
+
+<!-- Registration -->
+<div class="container">
+<h2 id="regTitle">Register Waste Picker</h2>
+
+<input type="text" id="name" placeholder="Full Name">
+<input type="number" id="age" placeholder="Age">
+<input type="text" id="address" placeholder="Address">
+<input type="text" id="account" placeholder="Account Number">
+
+<button class="action" onclick="addUser()" id="addBtn">Add Registration</button>
+
+<table>
+<thead>
+<tr>
+<th id="thName">Name</th>
+<th id="thAge">Age</th>
+<th id="thAddress">Address</th>
+<th id="thAccount">Account</th>
+<th id="thSkill">AI Skill</th>
+<th id="thCredits">Credits</th>
+</tr>
+</thead>
+<tbody id="userTable"></tbody>
+</table>
+</div>
+
+<!-- Waste Processing -->
+<div class="container">
+<h2>♻ Process Waste</h2>
+
+<select id="userSelect"></select>
+
+<select id="wasteType">
+<option value="plastic">Plastic</option>
+<option value="paper">Paper</option>
+<option value="metal">Metal</option>
+<option value="glass">Glass</option>
+</select>
+
+<input type="number" id="weight" placeholder="Enter Weight (kg)">
+
+<button class="action" onclick="processWaste()">Process Waste</button>
+
+<div class="result-box" id="output"></div>
+</div>
+
+<!-- Dashboard -->
+<div class="container">
+<h2>📊 Impact Dashboard</h2>
+
+<div class="dashboard">
+<div class="card">
+Total Waste
+<h3 id="totalWaste">0 kg</h3>
+</div>
+
+<div class="card">
+Total Credits
+<h3 id="totalCredits">0</h3>
+</div>
+
+<div class="card">
+Families Supported
+<h3 id="families">0</h3>
+</div>
+</div>
+
+<canvas id="wasteChart"></canvas>
+</div>
+
+<footer id="footerText">
+Supporting SDG 1 | SDG 4 | SDG 8 | SDG 12
+</footer>
+
+<script>
+
+let currentLang="en";
+let users=[];
+let totalWaste=0;
+let totalCredits=0;
+let wasteData={plastic:0,paper:0,metal:0,glass:0};
+
+const translations={
+en:{
+title:"AI-Based Waste-to-Skill Exchange Platform",
+subtitle:"National Level Competition Version",
+register:"Register Waste Picker",
+add:"Add Registration",
+name:"Name",
+age:"Age",
+address:"Address",
+account:"Account",
+skill:"AI Skill",
+credits:"Credits",
+footer:"Supporting SDG 1 | SDG 4 | SDG 8 | SDG 12"
+},
+mr:{
+title:"AI आधारित कचरा ते कौशल्य प्रणाली",
+subtitle:"राष्ट्रीय स्तर स्पर्धा आवृत्ती",
+register:"कचरा वेचक नोंदणी",
+add:"नोंदणी जोडा",
+name:"नाव",
+age:"वय",
+address:"पत्ता",
+account:"खाते क्रमांक",
+skill:"AI कौशल्य",
+credits:"क्रेडिट्स",
+footer:"SDG 1 | SDG 4 | SDG 8 | SDG 12 समर्थन"
+}
+};
+
+function setLanguage(lang){
+currentLang=lang;
+document.getElementById("mainTitle").innerText=translations[lang].title;
+document.getElementById("subtitle").innerText=translations[lang].subtitle;
+document.getElementById("regTitle").innerText=translations[lang].register;
+document.getElementById("addBtn").innerText=translations[lang].add;
+document.getElementById("thName").innerText=translations[lang].name;
+document.getElementById("thAge").innerText=translations[lang].age;
+document.getElementById("thAddress").innerText=translations[lang].address;
+document.getElementById("thAccount").innerText=translations[lang].account;
+document.getElementById("thSkill").innerText=translations[lang].skill;
+document.getElementById("thCredits").innerText=translations[lang].credits;
+document.getElementById("footerText").innerText=translations[lang].footer;
+updateUserTable();
+}
+
+function getAISkill(age,wasteType=null,credits=0){
+
+if(age<18){
+return currentLang==="en"?
+"Education Support + Scholarship Guidance":
+"शैक्षणिक सहाय्य + शिष्यवृत्ती मार्गदर्शन";
+}
+
+if(age<=30){
+if(wasteType==="plastic"){
+return currentLang==="en"?
+"Recycling Business Training":
+"रीसायकलिंग व्यवसाय प्रशिक्षण";
+}
+if(credits>200){
+return currentLang==="en"?
+"Digital Marketing & E-Commerce Skill":
+"डिजिटल मार्केटिंग व ई-कॉमर्स कौशल्य";
+}
+return currentLang==="en"?
+"Digital Skill Development Program":
+"डिजिटल कौशल्य विकास कार्यक्रम";
+}
+
+if(age<=50){
+if(credits>300){
+return currentLang==="en"?
+"Entrepreneurship + Small Startup Funding":
+"उद्योजकता + लघु स्टार्टअप निधी";
+}
+return currentLang==="en"?
+"Advanced Entrepreneurship Training":
+"प्रगत उद्योजकता प्रशिक्षण";
+}
+
+if(wasteType==="metal"){
+return currentLang==="en"?
+"Scrap Sorting Supervisor Training":
+"स्क्रॅप वर्गीकरण पर्यवेक्षक प्रशिक्षण";
+}
+
+return currentLang==="en"?
+"Micro Business Support & Financial Literacy":
+"सूक्ष्म व्यवसाय सहाय्य व आर्थिक साक्षरता";
+}
+
+function addUser(){
+let name=document.getElementById("name").value;
+let age=parseInt(document.getElementById("age").value);
+let address=document.getElementById("address").value;
+let account=document.getElementById("account").value;
+
+if(!name||!age||!address||!account){alert("Fill all fields");return;}
+
+let skill=getAISkill(age,null,0);
+users.push({name,age,address,account,skill,credits:0});
+
+updateUserTable();
+updateUserSelect();
+
+document.getElementById("name").value="";
+document.getElementById("age").value="";
+document.getElementById("address").value="";
+document.getElementById("account").value="";
+}
+
+function updateUserTable(){
+let table=document.getElementById("userTable");
+table.innerHTML="";
+users.forEach(u=>{
+table.innerHTML+=`
+<tr>
+<td>${u.name}</td>
+<td>${u.age}</td>
+<td>${u.address}</td>
+<td>${u.account}</td>
+<td>${getAISkill(u.age,null,u.credits)}</td>
+<td>${u.credits}</td>
+</tr>`;
+});
+}
+
+function updateUserSelect(){
+let select=document.getElementById("userSelect");
+select.innerHTML="";
+users.forEach((u,i)=>{
+select.innerHTML+=`<option value="${i}">${u.name}</option>`;
+});
+}
+
+function processWaste(){
+if(users.length===0){alert("Register user first");return;}
+
+let index=document.getElementById("userSelect").value;
+let type=document.getElementById("wasteType").value;
+let weight=parseFloat(document.getElementById("weight").value);
+
+if(!weight||weight<=0){alert("Enter valid weight");return;}
+
+let basePrice={plastic:15,paper:10,metal:25,glass:8};
+let value=weight*(basePrice[type]+Math.random()*5);
+let credits=Math.floor(value/5);
+
+users[index].credits+=credits;
+users[index].skill=getAISkill(users[index].age,type,users[index].credits);
+
+totalWaste+=weight;
+totalCredits+=credits;
+wasteData[type]+=weight;
+
+document.getElementById("output").innerHTML=
+`₹${value.toFixed(2)} generated | ${credits} credits added`;
+
+updateUserTable();
+updateDashboard();
+updateChart();
+}
+
+function updateDashboard(){
+document.getElementById("totalWaste").innerText=totalWaste+" kg";
+document.getElementById("totalCredits").innerText=totalCredits;
+document.getElementById("families").innerText=Math.floor(totalCredits/50);
+}
+
+let ctx=document.getElementById("wasteChart").getContext("2d");
+let wasteChart=new Chart(ctx,{
+type:'bar',
+data:{
+labels:['Plastic','Paper','Metal','Glass'],
+datasets:[{
+label:'Waste Collected (kg)',
+data:[0,0,0,0],
+backgroundColor:['#4caf50','#2196f3','#ff9800','#ff5722']
+}]
+}
+});
+
+function updateChart(){
+wasteChart.data.datasets[0].data=[
+wasteData.plastic,
+wasteData.paper,
+wasteData.metal,
+wasteData.glass
+];
+wasteChart.update();
+}
+
+</script>
+
+</body>
+</html>
